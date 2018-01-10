@@ -15,7 +15,6 @@
 (def ^:private state (atom {}))
 
 (defrecord ^:private Return [data])
-(defrecord ^:private Bookmark [name])
 
 (defprotocol ^:private IConveyor
   (init [this])
@@ -53,10 +52,15 @@
     "go to work!"))
 
 (defn- add-bookmark [id]
-  )
+  (swap! state update-in [id :stack] conj :bookmark))
 
 (defn- remove-bookmark [id]
-  )
+  (loop [[v & t] (-> id ->state :stack)
+         top     []]
+    (when v
+      (if (= t :bookmark)
+        (swap! state update-in [id :stack] concat v top)
+        (recur t (conj top v))))))
 
 (deftype Conveyor [id]
   IConveyor
