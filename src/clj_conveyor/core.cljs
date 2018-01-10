@@ -48,14 +48,22 @@
 
 (defn- wait-awake [id]
   (go
-    (<! (-> id ->state :pause-chan))))
+    (<! (-> id ->state :pause-chan))
+    (-> id ->state update-in [id :pause-chan] (chan))
+    "go to work!"))
+
+(defn- add-bookmark [id]
+  )
+
+(defn- remove-bookmark [id]
+  )
 
 (deftype Conveyor [id]
   IConveyor
   (init [this]
     (swap! state assoc id {:stack [] :played true :pause-chan (chan)})
     (go-loop []
-      (when-not (-> id ->state :played)
+      (when-not (-> this played?)
         (<! (wait-awake id)))
       (if-let [command (-> id ->state :stack :first)]
         (let [[cb t args] command]
@@ -69,8 +77,10 @@
   (add [this cb args] (add this cb nil args))
   (add [this cb t args]
     (let [empty (-> id ->state :stack empty?)]
-     (swap! state update-in [id :stack] conj [cb t args])
-     (awake id))
+      (add-bookmark id)
+      (swap! state update-in [id :stack] conj [cb t args])
+      (remove-bookmark id)
+      (awake id))
     this)
   (pause [this t] this (add this t #() []))
   (played? [this] (-> id ->state :played))
@@ -81,7 +91,7 @@
   (play [this]
     (when-not (played? this)
      (swap! state assoc-in [id :played] true)
-     (put! (-> id ->state :pause-chan) "play"))
+     (awake id))
     this)
   (clean [this] (init id) this)
   (clean-and-stop [this]
