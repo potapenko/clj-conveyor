@@ -48,7 +48,7 @@
 (defn- wait-awake [id]
   (go
     (<! (-> id ->state :pause-chan))
-    (-> id ->state update-in [id :pause-chan] (chan))
+    (swap! state update-in [id :pause-chan] (chan))
     "go to work!"))
 
 (defn- add-bookmark [id]
