@@ -23,6 +23,7 @@
   (pause [this t])
   (stop [this])
   (play [this])
+  (played? [this])
   (clean [this])
   (clean-and-stop [this]))
 
@@ -41,35 +42,46 @@
 (defn- ->state [id]
   (get @state id))
 
-(defn- get-last-stack [id]
-  (-> (->state id) :stack last))
+(defn- awake
+  [id]
+  (put! (-> id ->state :pause-chan) "awake!"))
+
+(defn- wait-awake [id]
+  (go
+    (<! (-> id ->state :pause-chan))))
 
 (deftype Conveyor [id]
   IConveyor
   (init [this]
-    (swap! state assoc id {:stack [(chan)] :played true :counter 0 :pause-chan (chan)})
+    (swap! state assoc id {:stack [] :played true :pause-chan (chan)})
     (go-loop []
-      (let [[cb t args] (<! (get-last-stack id))]
-        (<! (wait-timeout t))
-        (let [c (-> id ->state :counter)]
-          (swap! state update-in [id :stack] [] [(chan)])
-          (apply cb args)
-          (when (not= c (-> id ->state :counter))
-
-            )))
+      (when-not (-> id ->state :played)
+        (<! (wait-awake id)))
+      (if-let [command (-> id ->state :stack :first)]
+        (let [[cb t args] command]
+          (swap! state update-in [id :stack] rest)
+          (swap! state update-in [id :stack] vec)
+          (<! (wait-timeout t))
+          (apply cb args))
+        (<! (wait-awake id)))
       (recur))
     this)
   (add [this cb args] (add this cb nil args))
   (add [this cb t args]
-    (swap! state update-in [id :counter] inc)
-    (put! (get-last-stack) [cb t args])
+    (let [empty (-> id ->state :stack empty?)]
+     (swap! state update-in [id :stack] conj [cb t args])
+     (awake id))
     this)
   (pause [this t] this (add this t #() []))
+  (played? [this] (-> id ->state :played))
   (stop [this]
-    (swap! state assoc-in [id :played] false) this)
+    (when (played? this)
+      (swap! state assoc-in [id :played] false))
+    this)
   (play [this]
-    (swap! state assoc-in [id :played] true)
-    (put! (-> id ->state :pause-chan) [cb t args])
+    (when-not (played? this)
+     (swap! state assoc-in [id :played] true)
+     (put! (-> id ->state :pause-chan) "play"))
     this)
   (clean [this] (init id) this)
   (clean-and-stop [this]
