@@ -41,14 +41,13 @@
 (defn- ->state [id]
   (get @state id))
 
-(defn- awake
-  [id]
+(defn- awake [id]
   (put! (-> id ->state :pause-chan) "awake!"))
 
 (defn- wait-awake [id]
   (go
     (<! (-> id ->state :pause-chan))
-    (swap! state update-in [id :pause-chan] (chan))
+    (swap! state assoc-in [id :pause-chan] (chan))
     "go to work!"))
 
 (defn- add-bookmark [id]
@@ -56,11 +55,12 @@
 
 (defn- remove-bookmark [id]
   (loop [[v & t] (-> id ->state :stack)
-         top     []]
+         top     '()]
     (when v
-      (if (= t :bookmark)
-        (swap! state update-in [id :stack] concat v top)
-        (recur t (conj top v))))))
+      (if (= v :bookmark)
+        (let [stack (concat t top)]
+          (swap! state assoc-in [id :stack] (vec stack)))
+        (recur t (concat top [v]))))))
 
 (deftype Conveyor [id]
   IConveyor
@@ -69,22 +69,21 @@
     (go-loop []
       (when-not (-> this played?)
         (<! (wait-awake id)))
-      (if-let [command (-> id ->state :stack :first)]
+      (if-let [command (-> id ->state :stack first)]
         (let [[cb t args] command]
           (swap! state update-in [id :stack] rest)
           (swap! state update-in [id :stack] vec)
-          (<! (wait-timeout t))
-          (apply cb args))
+          (add-bookmark id)
+          (apply cb args)
+          (remove-bookmark id)
+          (<! (wait-timeout t)))
         (<! (wait-awake id)))
       (recur))
     this)
   (add [this cb args] (add this cb nil args))
   (add [this cb t args]
-    (let [empty (-> id ->state :stack empty?)]
-      (add-bookmark id)
-      (swap! state update-in [id :stack] conj [cb t args])
-      (remove-bookmark id)
-      (awake id))
+    (swap! state update-in [id :stack] conj [cb t args])
+    (awake id)
     this)
   (pause [this t] this (add this t #() []))
   (played? [this] (-> id ->state :played))
@@ -97,7 +96,9 @@
      (swap! state assoc-in [id :played] true)
      (awake id))
     this)
-  (clean [this] (init id) this)
+  (clean [this] (init id)
+    (swap! state update-in [id :stack] empty)
+    this)
   (clean-and-stop [this]
     (-> this clean stop)))
 
@@ -109,6 +110,20 @@
 (comment
   (Return. "hello")
   (->conv)
+
+  @state
+
+  (-> conv (add (fn []
+                  (-> conv (add #(println "hello conv 1") 500 [1]))
+                  (-> conv (add (fn []
+                                  (-> conv (add #(println "hello conv 2") 500 [2]))
+                                  (-> conv (add #(println "hello conv 3") 500 [2])))
+                                500 [3]))
+                  (-> conv (add #(println "hello conv 4") 500 [4]))
+                  (-> conv (add #(println "hello conv 5") 500 [5]))
+                  (println "hello conv 0")) 50 [0]))
+
+  (-> conv (add #(println "hello conv 1!!!!!!!!!!!!") 50 []))
 
   (instance? Return (Return. "hello"))
 
