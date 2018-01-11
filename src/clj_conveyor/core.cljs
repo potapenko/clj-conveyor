@@ -108,23 +108,18 @@
 (def conv (->conv))
 
 (comment
-  (Return. "hello")
-  (->conv)
-
-  @state
-
   (-> conv (add (fn []
                   (-> conv (add #(println "hello conv 1") 500 [1]))
                   (-> conv (add (fn []
-                                  (-> conv (add #(println "hello conv 2") 500 [2]))
-                                  (-> conv (add #(println "hello conv 3") 500 [2])))
+                                  (-> conv (add (fn []
+                                                  (-> conv (add #(println "hello conv 2") 500 [2]))
+                                                  (-> conv (add #(println "hello conv 3") 500 [2])))
+                                                500 [3]))
+                                  (-> conv (add #(println "hello conv 4") 500 [2]))
+                                  (-> conv (add #(println "hello conv 5") 500 [2])))
                                 500 [3]))
-                  (-> conv (add #(println "hello conv 4") 500 [4]))
-                  (-> conv (add #(println "hello conv 5") 500 [5]))
+                  (-> conv (add #(println "hello conv 6") 500 [4]))
+                  (-> conv (add #(println "hello conv 7") 500 [5]))
                   (println "hello conv 0")) 50 [0]))
-
-  (-> conv (add #(println "hello conv 1!!!!!!!!!!!!") 50 []))
-
-  (instance? Return (Return. "hello"))
 
   )
