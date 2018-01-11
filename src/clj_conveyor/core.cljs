@@ -29,7 +29,7 @@
 (defn- wait-timeout [t]
   (go
     (cond
-      (number? t)            (<! (timeout t))
+      (number? t)            (when (pos? t) (<! (timeout t)))
       (and
        (string? t)
        (re-find #"^\d+$" t)) (dotimes [x (js/parseInt t)]
