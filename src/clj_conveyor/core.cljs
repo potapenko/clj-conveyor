@@ -50,18 +50,6 @@
     (swap! state assoc-in [id :pause-chan] (chan))
     "go to work!"))
 
-(defn- add-bookmark [id]
-  (swap! state update-in [id :stack] conj :bookmark))
-
-(defn- remove-bookmark [id]
-  (loop [[v & t] (-> id ->state :stack)
-         top     '()]
-    (when v
-      (if (= v :bookmark)
-        (let [stack (concat t top)]
-          (swap! state assoc-in [id :stack] (vec stack)))
-        (recur t (concat top [v]))))))
-
 (deftype Conveyor [id]
   IConveyor
   (init [this]
@@ -73,9 +61,10 @@
         (let [[cb t args] command]
           (swap! state update-in [id :stack] rest)
           (swap! state update-in [id :stack] vec)
-          (add-bookmark id)
-          (apply cb args)
-          (remove-bookmark id)
+          (let [stack (-> id ->state :stack)]
+            (swap! state assoc-in [id :stack] [])
+            (apply cb args)
+            (swap! state update-in [id :stack] concat stack))
           (<! (wait-timeout t)))
         (<! (wait-awake id)))
       (recur))
