@@ -1,39 +1,17 @@
 # clj-conveyor
 
-FIXME: Write a one-line description of your library/project.
+Данная библиотека решает задачи организации виртуального стека на ClojureScript (в будущем - Clojure).
 
-## Overview
+### История создания
 
-FIXME: Write a paragraph about the library/project and highlight its goals.
+Эта библиотека является реинкарнацией моей старой библиотеки Conveyor для ActionScript (2001 год). Данная библиотека для Flash была очень популярна у разработчиков - особенно в русскоязычном Flash-сообществе. Она позволяла создавать отложенные во времени вычисления, очереди и анимацию на основе таких очередей. В отличии от других queue-решений, данный подход предлагал вложенность. То есть, если вызов из очереди, генерирует новые элементы очереди, то они помещаются в точку вызова - некий аналог стэка исполнения. 
 
-## Setup
+### Новая версия
 
-To get an interactive development environment run:
+Данная версия переписана на Clojure ибо мне самому в моих задачах не хватает данного подхода. 
+Функционал улучшен с помощью каналов core.async, а так же удален код прямого доступа к очереди (добавление в конец, начало очереди) - сейчас я считаю такой подход избыточным и даже  вредным. Только стэк. 
+Так же я добавил функционал по получения результата вычисления одной команды через каналы. 
 
-    lein figwheel
+Я планирую улучшить функционал в будущем. 
 
-and open your browser at [localhost:3449](http://localhost:3449/).
-This will auto compile and send all changes to the browser without the
-need to reload. After the compilation process is complete, you will
-get a Browser Connected REPL. An easy way to try it is:
 
-    (js/alert "Am I connected?")
-
-and you should see an alert in the browser window.
-
-To clean all compiled files:
-
-    lein clean
-
-To create a production build run:
-
-    lein do clean, cljsbuild once min
-
-And open your browser in `resources/public/index.html`. You will not
-get live reloading, nor a REPL. 
-
-## License
-
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
