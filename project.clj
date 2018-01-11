@@ -1,10 +1,8 @@
-(defproject clj-conveyor "1.0.0"
+(defproject clj-conveyor "1.0.0-SNAPSHOT"
   :description "A library for organizing a virtual stack on ClojureScript."
   :url "https://github.com/potapenko/clj-conveyor"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-
-  :signing {:gpg-key "eugene.john.potapenko@gmail.com"}
 
   :min-lein-version "2.7.1"
 
