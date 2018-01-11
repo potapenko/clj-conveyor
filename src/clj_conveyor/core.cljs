@@ -59,9 +59,7 @@
         (<! (wait-awake id)))
       (if-let [command (-> id ->state :stack first)]
         (let [[cb t args] command]
-          (swap! state update-in [id :stack] rest)
-          (swap! state update-in [id :stack] vec)
-          (let [stack (-> id ->state :stack)]
+          (let [stack (-> id ->state :stack rest)]
             (swap! state assoc-in [id :stack] [])
             (apply cb args)
             (swap! state update-in [id :stack] concat stack))
