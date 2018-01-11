@@ -1,5 +1,7 @@
 # clj-conveyor
 
+[clj-conveyor "1.0.0-SNAPSHOT"]
+
 Данная библиотека решает задачи организации виртуального стека на ClojureScript (в будущем - Clojure).
 
 ### История создания
