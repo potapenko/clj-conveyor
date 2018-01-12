@@ -14,11 +14,9 @@
 (def ^:private conv-counter (atom 0))
 (def ^:private state (atom {}))
 
-(defrecord ^:private Return [data])
-
 (defprotocol ^:private IConveyor
   (init [this])
-  (add [this cb args] [this cb t args])
+  (add [this cb] [this cb args] [this cb t args])
   (pause [this t])
   (stop [this])
   (play [this])
@@ -67,6 +65,7 @@
         (<! (wait-awake id)))
       (recur))
     this)
+  (add [this cb] (add this cb []))
   (add [this cb args] (add this cb nil args))
   (add [this cb t args]
     (swap! state update-in [id :stack] conj [cb t args])
@@ -96,17 +95,16 @@
 
 (comment
   (-> conv (add (fn []
-                  (-> conv (add #(println "hello conv 1") 500 [1]))
-                  (-> conv (add (fn []
-                                  (-> conv (add (fn []
-                                                  (-> conv (add #(println "hello conv 2") 500 [2]))
-                                                  (-> conv (add #(println "hello conv 3") 500 [2])))
-                                                500 [3]))
-                                  (-> conv (add #(println "hello conv 4") 500 [2]))
-                                  (-> conv (add #(println "hello conv 5") 500 [2])))
-                                500 [3]))
-                  (-> conv (add #(println "hello conv 6") 500 [4]))
-                  (-> conv (add #(println "hello conv 7") 500 [5]))
-                  (println "hello conv 0")) 50 [0]))
+             (-> conv (add #(println "hello conv 1") 500 []))
+             (-> conv (add (fn []
+                             (-> conv (add (fn []
+                                             (-> conv (add #(println "hello conv 2") 500 []))
+                                             (-> conv (add #(println "hello conv 3") 500 [])))
+                                           500 [3]))
+                             (-> conv (add #(println "hello conv 4") 500 []))
+                             (-> conv (add #(println "hello conv 5") 500 [])))
+                           500 []))
+             (-> conv (add #(println "hello conv 6") 500 []))
+             (-> conv (add #(println "hello conv 7") 500 [])))))
 
   )
