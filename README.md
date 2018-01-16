@@ -41,7 +41,7 @@ hello conv 5
 hello conv 6
 ```
 
-## Вложенная очередь - стэк
+## Вложенная очередь - "стэк вызовов"
 
 ![Конвейер (спасибо за иллюстрацию @fmnoise)](https://raw.githubusercontent.com/potapenko/clj-conveyor/master/image@2x.png)
 
