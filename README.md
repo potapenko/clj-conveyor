@@ -91,26 +91,26 @@ hello conv 7
 
 ## Другие методы
 
-`play/stop` -  остановить конвейер
+`start/stop` -  остановить конвейер
 
-`played?` - проверить проигрывается ли
+`stoped?` - проверить остановлен ли
 
-`clean` - очистить очередь 
+`clear` - очистить очередь 
 
 `pause` - остановить конвейер на время - например, вы используете библиотеку для анимации и хотели бы подождать пока отрисуется анимация, а потом продолжить поток исполнения. Аналогичен вызову `(-> conv (add #() pause-time-in-ms)`
 
-`clean-and-stop` - остановить и очистить. 
+`clear-and-stop` - остановить и очистить. 
 
 ```
 (defprotocol IConveyor
   (init [this])
   (add [this cb] [this cb args] [this cb t args])
   (pause [this t])
+  (start [this])
   (stop [this])
-  (play [this])
-  (played? [this])
-  (clean [this])
-  (clean-and-stop [this]))
+  (stoped? [this])
+  (clear [this])
+  (clear-and-stop [this]))
 ```
 
 ## License

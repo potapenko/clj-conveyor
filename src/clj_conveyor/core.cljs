@@ -21,8 +21,8 @@
   (start [this])
   (stop [this])
   (stoped? [this])
-  (clean [this])
-  (clean-and-stop [this]))
+  (clear [this])
+  (clear-and-stop [this]))
 
 (defn- wait-timeout [t]
   (go
@@ -82,11 +82,11 @@
      (swap! state assoc-in [id :stoped] true)
      (awake id))
     this)
-  (clean [this] (init id)
+  (clear [this] (init id)
     (swap! state update-in [id :stack] empty)
     this)
-  (clean-and-stop [this]
-    (-> this clean stop)))
+  (clear-and-stop [this]
+    (-> this clear stop)))
 
 (defn ->conv []
   (-> (Conveyor. (keyword (str "conv-" (swap! conv-counter inc)))) init))
