@@ -45,7 +45,7 @@ hello conv 6
 
 ![Конвейер (спасибо за иллюстрацию @fmnoise)](https://raw.githubusercontent.com/potapenko/clj-conveyor/master/image@2x.png)
 
-(спасибо за иллюстрацию @fmnoise)
+_(спасибо за иллюстрацию [@fmnoise](https://github.com/fmnoise))_
 
 Вложенность - это когда вызовы из очереди, добавляющие элементы очередь, помещают в очередь команды в точку вызова.
 
