@@ -1,4 +1,4 @@
-(defproject clj-conveyor "1.0.3"
+(defproject clj-conveyor "1.0.2"
   :description "A library for organizing a virtual stack on ClojureScript."
   :url "https://github.com/potapenko/clj-conveyor"
   :license {:name "Eclipse Public License"
