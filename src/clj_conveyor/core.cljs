@@ -20,7 +20,7 @@
   (pause [this t])
   (start [this])
   (stop [this])
-  (stoped? [this])
+  (stopped? [this])
   (clear [this])
   (clear-and-stop [this]))
 
@@ -51,9 +51,9 @@
 (deftype Conveyor [id]
   IConveyor
   (init [this]
-    (swap! state assoc id {:stack [] :stoped false :pause-chan (chan)})
+    (swap! state assoc id {:stack [] :stopped false :pause-chan (chan)})
     (go-loop []
-      (when (-> this stoped?)
+      (when (-> this stopped?)
         (<! (wait-awake id)))
       (if-let [command (-> id ->state :stack first)]
         (let [[cb t args] command]
@@ -72,14 +72,14 @@
     (awake id)
     this)
   (pause [this t] this (add this t #() []))
-  (stoped? [this] (-> id ->state :stoped))
+  (stopped? [this] (-> id ->state :stopped))
   (start [this]
-    (when (stoped? this)
-      (swap! state assoc-in [id :stoped] false))
+    (when (stopped? this)
+      (swap! state assoc-in [id :stopped] false))
     this)
   (stop [this]
-    (when-not (stoped? this)
-     (swap! state assoc-in [id :stoped] true)
+    (when-not (stopped? this)
+     (swap! state assoc-in [id :stopped] true)
      (awake id))
     this)
   (clear [this] (init id)
