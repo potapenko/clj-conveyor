@@ -1,5 +1,6 @@
 (ns clj-conveyor.core
-  (:require [cljs.core.async :as async :refer [<! >! put! chan timeout]])
+  (:require [cljs.core.async :as async :refer [<! >! put! chan timeout]]
+            [cljs.core.async.impl.channels :as aimpl])
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (enable-console-print!)
@@ -16,7 +17,7 @@
 
 (defprotocol ^:private IConveyor
   (init [this])
-  (add [this cb] [this cb args] [this cb t args])
+  (add [this fun] [this fun t])
   (pause [this t])
   (start [this])
   (stop [this])
@@ -48,6 +49,9 @@
     (swap! state assoc-in [id :pause-chan] (chan))
     "go to work!"))
 
+(defn- channel? [o]
+  (instance? aimpl/ManyToManyChannel o))
+
 (deftype Conveyor [id]
   IConveyor
   (init [this]
@@ -56,22 +60,31 @@
       (when (-> this stopped?)
         (<! (wait-awake id)))
       (if-let [command (-> id ->state :stack first)]
-        (let [[cb t args] command]
+        (let [[fun t result-chan] command]
           (let [stack (-> id ->state :stack rest)]
             (swap! state assoc-in [id :stack] [])
-            (apply cb args)
+            (let [res          (try
+                                 (fun)
+                                 (catch :default e
+                                   (js/console.error
+                                    "Conveyor call fun error:" e)))]
+              (put! result-chan (or
+                                 (if (channel? res)
+                                   (<! res)
+                                   res)
+                                 "Conv function return nothing")))
             (swap! state update-in [id :stack] concat stack))
           (<! (wait-timeout t)))
         (<! (wait-awake id)))
       (recur))
     this)
-  (add [this cb] (add this cb []))
-  (add [this cb args] (add this cb nil args))
-  (add [this cb t args]
-    (swap! state update-in [id :stack] conj [cb t args])
-    (awake id)
-    this)
-  (pause [this t] this (add this t #() []))
+  (add [this fun] (add this fun 0))
+  (add [this fun t]
+    (let [result-chan (chan)]
+      (swap! state update-in [id :stack] concat [[fun t result-chan]])
+      (awake id)
+      [this result-chan]))
+  (pause [this t] this (add this #() t))
   (stopped? [this] (-> id ->state :stopped))
   (start [this]
     (when (stopped? this)
@@ -88,23 +101,9 @@
   (clear-and-stop [this]
     (-> this clear stop)))
 
-(defn ->conv []
+(defn ->conv
+  "Create conveyor instance."
+  []
   (-> (Conveyor. (keyword (str "conv-" (swap! conv-counter inc)))) init))
 
-(def conv (->conv))
 
-(comment
-  (-> conv (add (fn []
-             (-> conv (add #(println "hello conv 1") 500 []))
-             (-> conv (add (fn []
-                             (-> conv (add (fn []
-                                             (-> conv (add #(println "hello conv 2") 500 []))
-                                             (-> conv (add #(println "hello conv 3") 500 [])))
-                                           500 [3]))
-                             (-> conv (add #(println "hello conv 4") 500 []))
-                             (-> conv (add #(println "hello conv 5") 500 [])))
-                           500 []))
-             (-> conv (add #(println "hello conv 6") 500 []))
-             (-> conv (add #(println "hello conv 7") 500 [])))))
-
-  )
